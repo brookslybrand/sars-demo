@@ -2,6 +2,17 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
@@ -11,10 +22,14 @@
     "react-scripts": "3.4.0"
   },
   "scripts": {
+    "build:styles": "postcss src/tailwind.css -o src/styles.css",
+    "prestart": "yarn build:styles",
     "start": "react-scripts start",
+    "prebuild": "NODE_ENV=production yarn build:styles",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "analyze": "source-map-explorer 'build/static/js/*.js'"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -30,5 +45,15 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^2.1.0",
+    "autoprefixer": "^9.7.4",
+    "husky": "^4.2.3",
+    "lint-staged": "^10.0.8",
+    "postcss-cli": "^7.1.0",
+    "prettier": "^1.19.1",
+    "source-map-explorer": "^2.3.1",
+    "tailwindcss": "^1.2.0"
   }
 }
