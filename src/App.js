@@ -25,7 +25,7 @@ const useSARSData = () => {
     error: null
   })
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/records/')
+    fetch('https://sars-kysxppr52a-uw.a.run.app/records/')
       .then(response => response.json())
       .then(data => {
         setSARSData({ status: 'resolved', data, error: null })
