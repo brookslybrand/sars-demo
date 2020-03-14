@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef, useMemo } from 'react'
+import Select from 'react-select'
 import { select } from 'd3-selection'
 import { scaleUtc, scaleLinear, scaleOrdinal } from 'd3-scale'
 import { stack, area as d3Area } from 'd3-shape'
@@ -14,7 +15,7 @@ function App() {
         {sarsData.status === 'loading' && <Loading />}
         {sarsData.status === 'rejected' && <Error error={sarsData.error} />}
       </header>
-      {sarsData.status === 'resolved' && <Plot data={sarsData.data} />}
+      {sarsData.status === 'resolved' && <Visualization data={sarsData.data} />}
     </main>
   )
 }
@@ -69,6 +70,34 @@ function Error({ error }) {
   )
 }
 
+function Visualization({ data }) {
+  const [selectedValues, setSelectedValues] = useState(null)
+
+  const countryOptions = useMemo(() => {
+    const countriesSet = new Set()
+    data.forEach(({ country }) => countriesSet.add(country))
+
+    return [...countriesSet].map(country => ({
+      value: country,
+      label: country
+    }))
+  }, [data])
+
+  return (
+    <section className="max-w-5xl max-h-full mt-8 mx-auto">
+      <Select
+        className=" sm:w-full md:w-2/3 lg:w-1/2 xl:1/3"
+        value={selectedValues}
+        onChange={setSelectedValues}
+        isMulti
+        name="colors"
+        options={countryOptions}
+      />
+      <Plot data={data} countries={selectedValues?.map(({ value }) => value)} />
+    </section>
+  )
+}
+
 const categories = ['cases', 'deaths', 'recoveries']
 const width = 900
 const height = 500
@@ -78,14 +107,14 @@ const color = scaleOrdinal()
   .domain(categories)
   .range(['#1f77b4', '#d62728', '#2ca02c'])
 
-function Plot({ data }) {
+function Plot({ data, countries = null }) {
   const areaRef = useRef()
   const xAxisRef = useRef()
   const yAxisRef = useRef()
 
   // taken from https://observablehq.com/@d3/stacked-area-chart
   useEffect(() => {
-    const aggregatedData = getAggregatedData(data)
+    const aggregatedData = getAggregatedData(data, countries)
 
     const series = stack().keys(categories)(aggregatedData)
 
@@ -140,48 +169,49 @@ function Plot({ data }) {
           .attr('font-weight', 'bold')
           .text(aggregatedData.y)
       )
-  }, [data])
+  }, [data, countries])
 
   return (
-    <section className="max-w-5xl max-h-full mt-8 mx-auto">
-      <svg viewBox={`0, 0, ${width}, ${height}`}>
-        {[...categories].reverse().map((category, idx) => {
-          const y = margin.top + 20 * idx
-          const x = width - margin.right + 5
-          return (
-            <g key={category}>
-              <line
-                x1={x}
-                y1={y}
-                x2={x + legendWidth}
-                y2={y}
-                stroke={color(category)}
-                strokeWidth={3}
-              />
-              <text
-                className="text-xs font-light capitalize"
-                x={x + legendWidth + 5}
-                y={y}
-                alignmentBaseline="middle"
-              >
-                {category}
-              </text>
-            </g>
-          )
-        })}
+    <svg className="mt-4" viewBox={`0, 0, ${width}, ${height}`}>
+      {[...categories].reverse().map((category, idx) => {
+        const y = margin.top + 20 * idx
+        const x = width - margin.right + 5
+        return (
+          <g key={category}>
+            <line
+              x1={x}
+              y1={y}
+              x2={x + legendWidth}
+              y2={y}
+              stroke={color(category)}
+              strokeWidth={3}
+            />
+            <text
+              className="text-xs font-light capitalize"
+              x={x + legendWidth + 5}
+              y={y}
+              alignmentBaseline="middle"
+            >
+              {category}
+            </text>
+          </g>
+        )
+      })}
 
-        <g ref={areaRef} />
-        <g ref={xAxisRef} />
-        <g ref={yAxisRef} />
-      </svg>
-    </section>
+      <g ref={areaRef} />
+      <g ref={xAxisRef} />
+      <g ref={yAxisRef} />
+    </svg>
   )
 }
 
-const getAggregatedData = data => {
+const getAggregatedData = (data, countries) => {
   let aggregationMap = new Map()
   // go through everything and create a map of the aggregated data
-  for (const { date, cases, deaths, recoveries } of data) {
+  for (const { date, country, cases, deaths, recoveries } of data) {
+    // if there are no countries, show them all
+    if (countries && !countries.includes(country)) continue
+
     const values = aggregationMap.get(date)
     const total = cases + deaths + recoveries
 
