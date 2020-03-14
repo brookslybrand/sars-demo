@@ -9,7 +9,6 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
-      "yarn prebuild",
       "prettier --write",
       "git add"
     ]
