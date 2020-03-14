@@ -88,7 +88,7 @@ function Visualization({ data }) {
       <Select
         className=" sm:w-full md:w-2/3 lg:w-1/2 xl:1/3"
         value={selectedValues}
-        onChange={setSelectedValues}
+        onChange={e => setSelectedValues(e && e.length > 0 ? e : null)}
         isMulti
         name="colors"
         options={countryOptions}
